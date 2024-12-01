@@ -6,11 +6,11 @@ plugins {
 
 android {
     namespace = "com.example.shopinglist"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.shopinglist"
-        minSdk = 24
+        minSdk = 21
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
