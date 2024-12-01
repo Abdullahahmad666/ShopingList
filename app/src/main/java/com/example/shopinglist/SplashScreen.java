@@ -1,6 +1,11 @@
 package com.example.shopinglist;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,5 +25,19 @@ public class SplashScreen extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        ImageView logo = findViewById(R.id.ivlogo);
+
+        // Load the animation from XML
+        Animation logoAnimation = AnimationUtils.loadAnimation(this, R.anim.logo_animation);
+
+        // Start the animation
+        logo.startAnimation(logoAnimation);
+
+        // Delay navigation to LoginActivity after the animation ends
+        new Handler().postDelayed(() -> {
+            startActivity(new Intent(SplashScreen.this, Login.class));
+            finish();
+        }, 1500); // Match the duration of the animation
     }
+
 }
