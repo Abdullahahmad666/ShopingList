@@ -21,7 +21,6 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
     public ShoppingListAdapter() {
         this.shoppingItemList = new ArrayList<>();
         firestore = FirebaseFirestore.getInstance();
-        fetchItemsFromFirestore();
     }
 
     @NonNull
@@ -64,7 +63,8 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
         }
     }
 
-    private void fetchItemsFromFirestore() {
+    // Refactor data fetching to a method
+    public void fetchItemsFromFirestore() {
         firestore.collection("ShoppingItems")
                 .orderBy("itemName")
                 .get()
@@ -83,6 +83,7 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
                 });
     }
 
+    // Method to delete item
     private void deleteItem(int position) {
         ShoppingItem itemToDelete = shoppingItemList.get(position);
         firestore.collection("ShoppingItems")
@@ -98,5 +99,6 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
                 });
     }
 }
+
 
 

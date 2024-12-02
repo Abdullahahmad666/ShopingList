@@ -1,5 +1,6 @@
 package com.example.shopinglist;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -17,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import java.util.HashMap;
+
+import kotlinx.coroutines.MainCoroutineDispatcher;
 
 public class AddNewl extends AppCompatActivity {
 
@@ -37,7 +40,15 @@ public class AddNewl extends AppCompatActivity {
         priceInput = findViewById(R.id.priceInput);
         addItemButton = findViewById(R.id.addItemButton);
 
-        addItemButton.setOnClickListener(view -> addNewItem());
+        addItemButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addNewItem();
+                Intent i = new Intent(AddNewl.this, MainActivity.class);
+                startActivity(i);
+                finish();
+            }
+        });
     }
 
     private void addNewItem() {
