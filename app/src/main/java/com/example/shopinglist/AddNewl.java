@@ -1,5 +1,6 @@
 package com.example.shopinglist;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -43,10 +44,14 @@ public class AddNewl extends AppCompatActivity {
         addItemButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 addNewItem();
+                ProgressDialog progressDialog = new ProgressDialog(AddNewl.this);
+                progressDialog.show();
                 Intent i = new Intent(AddNewl.this, MainActivity.class);
                 startActivity(i);
                 finish();
+                progressDialog.dismiss();
             }
         });
     }

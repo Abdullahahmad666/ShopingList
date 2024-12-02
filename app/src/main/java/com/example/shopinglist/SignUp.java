@@ -1,5 +1,6 @@
 package com.example.shopinglist;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -63,11 +64,13 @@ public class SignUp extends AppCompatActivity {
                     Toast.makeText(SignUp.this, "Email or password is empty", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
+                ProgressDialog progressDialog = new ProgressDialog(SignUp.this);
+                progressDialog.show();
                 auth.createUserWithEmailAndPassword(username, password)
                         .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                             @Override
                             public void onSuccess(AuthResult authResult) {
+
                                 String userID = auth.getCurrentUser().getUid();
                                 // store rest of the data into firestore
                                 HashMap<String, Object> data = new HashMap<>();
@@ -82,11 +85,12 @@ public class SignUp extends AppCompatActivity {
                                                 if(task.isSuccessful())
                                                 {
                                                     Toast.makeText(SignUp.this, "User Created", Toast.LENGTH_SHORT).show();
-
+                                                    progressDialog.dismiss();
                                                 }
                                                 else
                                                 {
                                                     Toast.makeText(SignUp.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                                    progressDialog.dismiss();
                                                 }
                                             }
                                         });
