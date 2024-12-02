@@ -7,8 +7,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -97,6 +99,12 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
 
     // Method to delete item from Realtime Database
     private void deleteItem(int position) {
+        // Validate the position to ensure it's within the bounds of the list
+        if (position < 0 || position >= shoppingItemList.size()) {
+            Log.e("DeleteItem", "Invalid position: " + position);
+            return;
+        }
+
         // Get the item to delete from the list
         ShoppingItem itemToDelete = shoppingItemList.get(position);
 
@@ -114,20 +122,72 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
                 .removeValue()
                 .addOnSuccessListener(aVoid -> {
                     // Successfully deleted from Realtime Database
+                    Log.d("DeleteItem", "Item deleted from Firebase successfully.");
 
-                    // Remove the item from the local list
-                    shoppingItemList.remove(position);
-
-                    // Notify the adapter about the changes in a consistent way
-                    notifyItemRemoved(position);
-                    notifyItemRangeChanged(position, shoppingItemList.size());
-
-                    Log.d("DeleteItem", "Item deleted successfully.");
+                    // Remove the item from the local list in a thread-safe manner
+                    if (position < shoppingItemList.size()) {
+                        shoppingItemList.remove(position);
+                        notifyItemRemoved(position);
+                        notifyItemRangeChanged(position, shoppingItemList.size());
+                    }
                 })
                 .addOnFailureListener(e -> {
                     // Handle errors if deletion fails
                     Log.e("DeleteItem", "Error deleting item: ", e);
                 });
     }
+
+    // Implement a ChildEventListener to synchronize Firebase updates to the UI
+    private void addChildEventListener() {
+        databaseReference.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                ShoppingItem item = snapshot.getValue(ShoppingItem.class);
+                if (item != null) {
+                    item.setUniqueKey(snapshot.getKey()); // Set the unique key to the item
+                    shoppingItemList.add(item);
+                    notifyItemInserted(shoppingItemList.size() - 1);
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                ShoppingItem item = snapshot.getValue(ShoppingItem.class);
+                if (item != null) {
+                    String uniqueKey = snapshot.getKey();
+                    for (int i = 0; i < shoppingItemList.size(); i++) {
+                        if (shoppingItemList.get(i).getUniqueKey().equals(uniqueKey)) {
+                            shoppingItemList.set(i, item);
+                            notifyItemChanged(i);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+                String uniqueKey = snapshot.getKey();
+                for (int i = 0; i < shoppingItemList.size(); i++) {
+                    if (shoppingItemList.get(i).getUniqueKey().equals(uniqueKey)) {
+                        shoppingItemList.remove(i);
+                        notifyItemRemoved(i);
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                // Optional: handle item reordering if needed
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("ChildEventListener", "Error listening to database changes: ", error.toException());
+            }
+        });
+    }
+
 
 }
