@@ -25,7 +25,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/itemNameInput"
-        android:marginTop="16dp"/>
+        android:layout_marginTop="16dp"/>
 
     <EditText
         android:id="@+id/priceInput"
@@ -36,7 +36,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/quantityInput"
-        android:marginTop="16dp"/>
+        android:layout_marginTop="16dp"/>
 
     <Button
         android:id="@+id/addItemButton"
@@ -46,6 +46,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/priceInput"
-        android:marginTop="16dp"/>
+        android:layout_marginTop="16dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
