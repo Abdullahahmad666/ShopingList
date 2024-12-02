@@ -22,24 +22,7 @@
         {
           "current_key": "AIzaSyDlAWLUVF5hAo6T-CLJOfmNCUbVIDVbNMA"
         }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "582261565100-a64brjpt8rot1hi2k571g1069d5c814r.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "582261565100-n1vc0oajt50vj6kbb3rt8a5se80p5gq1.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.myweb.newproject"
-              }
-            }
-          ]
-        }
-      }
+      ]
     }
   ],
   "configuration_version": "1"

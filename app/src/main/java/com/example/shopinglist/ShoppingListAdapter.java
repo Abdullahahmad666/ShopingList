@@ -1,5 +1,6 @@
 package com.example.shopinglist;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,8 +8,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,11 +21,11 @@ import java.util.List;
 
 public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapter.ShoppingItemViewHolder> {
     private List<ShoppingItem> shoppingItemList;
-    private FirebaseFirestore firestore;
+    private DatabaseReference databaseReference;
 
     public ShoppingListAdapter() {
         this.shoppingItemList = new ArrayList<>();
-        firestore = FirebaseFirestore.getInstance();
+        databaseReference = FirebaseDatabase.getInstance().getReference("ShoppingItems");
     }
 
     @NonNull
@@ -40,7 +45,7 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
 
         // Delete button
         holder.deleteButton.setOnClickListener(view -> {
-            // Delete item from Firestore
+            // Delete item from Realtime Database
             deleteItem(position);
         });
     }
@@ -63,32 +68,36 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
         }
     }
 
-    // Refactor data fetching to a method
-    public void fetchItemsFromFirestore() {
-        firestore.collection("ShoppingItems")
-                .orderBy("itemName")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots != null) {
-                        shoppingItemList.clear();
-                        for (DocumentSnapshot snapshot : queryDocumentSnapshots.getDocuments()) {
-                            ShoppingItem item = snapshot.toObject(ShoppingItem.class);
-                            shoppingItemList.add(item);
-                        }
-                        notifyDataSetChanged();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    // Handle errors here
-                });
+    // Fetch data from Realtime Database
+    public void fetchItemsFromRealtimeDatabase() {
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                shoppingItemList.clear();  // Clear the existing list
+
+                // Loop through the dataSnapshot to get the items
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    ShoppingItem item = snapshot.getValue(ShoppingItem.class);
+                    shoppingItemList.add(item);
+                }
+
+                // Notify the adapter about the data change
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle errors
+                Log.e("Realtime DB", "Error fetching data: ", databaseError.toException());
+            }
+        });
     }
 
-    // Method to delete item
+    // Method to delete item from Realtime Database
     private void deleteItem(int position) {
         ShoppingItem itemToDelete = shoppingItemList.get(position);
-        firestore.collection("ShoppingItems")
-                .document(itemToDelete.getItemName())  // Assuming itemName is unique
-                .delete()
+        databaseReference.child(itemToDelete.getItemName())  // Assuming itemName is unique and used as key
+                .removeValue()
                 .addOnSuccessListener(aVoid -> {
                     shoppingItemList.remove(position);
                     notifyItemRemoved(position);
@@ -99,6 +108,3 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
                 });
     }
 }
-
-
-

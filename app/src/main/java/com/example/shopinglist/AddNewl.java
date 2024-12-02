@@ -79,7 +79,7 @@ public class AddNewl extends AppCompatActivity {
         databaseReference.child(itemId).setValue(itemData).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Toast.makeText(this, "Item added successfully", Toast.LENGTH_SHORT).show();
-                finish();
+
             } else {
                 Toast.makeText(this, "Failed to add item", Toast.LENGTH_SHORT).show();
             }
