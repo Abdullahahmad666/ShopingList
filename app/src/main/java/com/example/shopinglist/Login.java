@@ -29,7 +29,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class Login extends AppCompatActivity {
-    EditText email,etpassword;
+    EditText email, etpassword;
     Button btnLogin;
     TextView tvsignup, tvForgetPassword;
     FirebaseAuth auth;
@@ -38,112 +38,73 @@ public class Login extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
-        tvsignup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(Login.this, SignUp.class);
-                startActivity(i);
-                finish();
-            }
-        });
+        // Initialize views
         init();
 
-        if(user!=null)
-        {
+        // Set up click listeners
+        tvsignup.setOnClickListener(v -> {
+            Intent i = new Intent(Login.this, SignUp.class);
+            startActivity(i);
+            finish();
+        });
+
+        if(user != null) {
             startActivity(new Intent(Login.this, MainActivity.class));
             finish();
         }
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String username = email.getText().toString().trim();
-                String password = etpassword.getText().toString();
-                if(TextUtils.isEmpty(username) || TextUtils.isEmpty(password))
-                {
-                    Toast.makeText(Login.this, "Email or password is empty", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                ProgressDialog progressDialog = new ProgressDialog(Login.this);
-                progressDialog.show();
-                auth.signInWithEmailAndPassword(username, password)
-                        .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-                            @Override
-                            public void onSuccess(AuthResult authResult) {
-                                progressDialog.dismiss();
-                                startActivity(new Intent(Login.this, ContactsContract.Profile.class));
-                                finish();
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(Login.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                                progressDialog.dismiss();
-                            }
-                        });
-
+        btnLogin.setOnClickListener(view -> {
+            String username = email.getText().toString().trim();
+            String password = etpassword.getText().toString();
+            if(TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
+                Toast.makeText(Login.this, "Email or password is empty", Toast.LENGTH_SHORT).show();
+                return;
             }
-        });
-        tvForgetPassword.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                EditText etEmail = new EditText(view.getContext());
-                AlertDialog.Builder forgetPasswordDialog = new AlertDialog.Builder(view.getContext())
-                        .setTitle("Forget Password Email...")
-                        .setView(etEmail)
-                        .setPositiveButton("Send", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                String email = etEmail.getText().toString().trim();
-                                if(TextUtils.isEmpty(email))
-                                {
-                                    etEmail.setError("Give valid email address");
-                                }
-                                else
-                                {
-                                    ProgressDialog progressDialog = new ProgressDialog(Login.this);
-                                    progressDialog.show();
-                                    auth.sendPasswordResetEmail(email)
-                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    if(task.isSuccessful())
-                                                    {
-                                                        Toast.makeText(Login.this, "check your inbox...", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                    else
-                                                    {
-                                                        Toast.makeText(Login.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                                    }
-                                                    progressDialog.dismiss();
-                                                }
-                                            });
-                                }
-                            }
-                        })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-
-                            }
-                        });
-                forgetPasswordDialog.show();
-            }
+            ProgressDialog progressDialog = new ProgressDialog(Login.this);
+            progressDialog.show();
+            auth.signInWithEmailAndPassword(username, password)
+                    .addOnSuccessListener(authResult -> {
+                        progressDialog.dismiss();
+                        startActivity(new Intent(Login.this, MainActivity.class));  // Correct activity
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(Login.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        progressDialog.dismiss();
+                    });
         });
 
+        tvForgetPassword.setOnClickListener(view -> {
+            EditText etEmail = new EditText(view.getContext());
+            AlertDialog.Builder forgetPasswordDialog = new AlertDialog.Builder(view.getContext())
+                    .setTitle("Forget Password Email...")
+                    .setView(etEmail)
+                    .setPositiveButton("Send", (dialogInterface, i) -> {
+                        String email = etEmail.getText().toString().trim();
+                        if(TextUtils.isEmpty(email)) {
+                            etEmail.setError("Give valid email address");
+                        } else {
+                            ProgressDialog progressDialog = new ProgressDialog(Login.this);
+                            progressDialog.show();
+                            auth.sendPasswordResetEmail(email)
+                                    .addOnCompleteListener(task -> {
+                                        if(task.isSuccessful()) {
+                                            Toast.makeText(Login.this, "Check your inbox...", Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            Toast.makeText(Login.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                        progressDialog.dismiss();
+                                    });
+                        }
+                    })
+                    .setNegativeButton("Cancel", null);
+            forgetPasswordDialog.show();
+        });
     }
 
-    public void init()
-    {
+    public void init() {
         email = findViewById(R.id.email);
         etpassword = findViewById(R.id.password);
         btnLogin = findViewById(R.id.btnLogin);
@@ -152,5 +113,4 @@ public class Login extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         user = auth.getCurrentUser();
     }
-
 }
