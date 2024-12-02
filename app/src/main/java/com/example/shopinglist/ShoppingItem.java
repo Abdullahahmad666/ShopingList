@@ -1,21 +1,29 @@
 package com.example.shopinglist;
-
-public class ShoppingItem {
+public class ShoppingItem
+{
+    private String uniqueKey; // The Firebase unique key
     private String itemName;
+    private int price;
     private int quantity;
-    private double price;
 
-    // Default constructor for Firebase
-    public ShoppingItem() {
-    }
+    public ShoppingItem() {}
 
-    public ShoppingItem(String itemName, int quantity, double price) {
+    // Constructor, getters, and setters
+    public ShoppingItem(String uniqueKey, String itemName, int price, int quantity) {
+        this.uniqueKey = uniqueKey;
         this.itemName = itemName;
-        this.quantity = quantity;
         this.price = price;
+        this.quantity = quantity;
     }
 
-    // Getters and Setters
+    public String getUniqueKey() {
+        return uniqueKey;
+    }
+
+    public void setUniqueKey(String uniqueKey) {
+        this.uniqueKey = uniqueKey;
+    }
+
     public String getItemName() {
         return itemName;
     }
@@ -24,19 +32,19 @@ public class ShoppingItem {
         this.itemName = itemName;
     }
 
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
     public int getQuantity() {
         return quantity;
     }
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
     }
 }

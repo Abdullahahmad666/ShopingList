@@ -18,7 +18,6 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapter.ShoppingItemViewHolder> {
     private List<ShoppingItem> shoppingItemList;
     private DatabaseReference databaseReference;
@@ -73,12 +72,15 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
         databaseReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                shoppingItemList.clear();  // Clear the existing list
+                shoppingItemList.clear(); // Clear the existing list
 
                 // Loop through the dataSnapshot to get the items
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     ShoppingItem item = snapshot.getValue(ShoppingItem.class);
-                    shoppingItemList.add(item);
+                    if (item != null) {
+                        item.setUniqueKey(snapshot.getKey()); // Set the unique key from Firebase
+                        shoppingItemList.add(item);
+                    }
                 }
 
                 // Notify the adapter about the data change
@@ -95,16 +97,37 @@ public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapte
 
     // Method to delete item from Realtime Database
     private void deleteItem(int position) {
+        // Get the item to delete from the list
         ShoppingItem itemToDelete = shoppingItemList.get(position);
-        databaseReference.child(itemToDelete.getItemName())  // Assuming itemName is unique and used as key
+
+        // Retrieve the unique key for the item
+        String uniqueKey = itemToDelete.getUniqueKey(); // Ensure ShoppingItem has a getUniqueKey() method
+        if (uniqueKey == null || uniqueKey.isEmpty()) {
+            Log.e("DeleteItem", "Unique key is null or empty.");
+            return;
+        }
+
+        Log.d("DeleteItem", "Deleting item with unique key: " + uniqueKey);
+
+        // Delete the item from Firebase Realtime Database using the unique key
+        databaseReference.child(uniqueKey)
                 .removeValue()
                 .addOnSuccessListener(aVoid -> {
+                    // Successfully deleted from Realtime Database
+
+                    // Remove the item from the local list
                     shoppingItemList.remove(position);
+
+                    // Notify the adapter about the changes in a consistent way
                     notifyItemRemoved(position);
                     notifyItemRangeChanged(position, shoppingItemList.size());
+
+                    Log.d("DeleteItem", "Item deleted successfully.");
                 })
                 .addOnFailureListener(e -> {
-                    // Handle errors here
+                    // Handle errors if deletion fails
+                    Log.e("DeleteItem", "Error deleting item: ", e);
                 });
     }
+
 }
