@@ -7,31 +7,21 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
-import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class ShoppingListAdapter extends FirestoreRecyclerAdapter<ShoppingItem, ShoppingListAdapter.ShoppingItemViewHolder> {
+import java.util.ArrayList;
+import java.util.List;
 
-    // Constructor
-    public ShoppingListAdapter(@NonNull FirestoreRecyclerOptions<ShoppingItem> options) {
-        super(options);
-    }
 
-    @Override
-    protected void onBindViewHolder(@NonNull ShoppingItemViewHolder holder, int position, @NonNull ShoppingItem model) {
-        // Bind data to the ViewHolder
-        holder.itemName.setText("Item: " + model.getItemName());
-        holder.quantity.setText("Quantity: " + model.getQuantity());
-        holder.price.setText("Price: $" + model.getPrice());
+public class ShoppingListAdapter extends RecyclerView.Adapter<ShoppingListAdapter.ShoppingItemViewHolder> {
+    private List<ShoppingItem> shoppingItemList;
+    private FirebaseFirestore firestore;
 
-        // Handle delete button
-        holder.deleteButton.setOnClickListener(view -> {
-            // Remove item from Firestore
-            FirebaseFirestore.getInstance().collection("ShoppingItems")
-                    .document(getSnapshots().getSnapshot(position).getId())
-                    .delete();
-        });
+    public ShoppingListAdapter() {
+        this.shoppingItemList = new ArrayList<>();
+        firestore = FirebaseFirestore.getInstance();
+        fetchItemsFromFirestore();
     }
 
     @NonNull
@@ -42,8 +32,26 @@ public class ShoppingListAdapter extends FirestoreRecyclerAdapter<ShoppingItem, 
         return new ShoppingItemViewHolder(view);
     }
 
-    // ViewHolder class
-    static class ShoppingItemViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public void onBindViewHolder(@NonNull ShoppingItemViewHolder holder, int position) {
+        ShoppingItem item = shoppingItemList.get(position);
+        holder.itemName.setText("Item: " + item.getItemName());
+        holder.quantity.setText("Quantity: " + item.getQuantity());
+        holder.price.setText("Price: $" + item.getPrice());
+
+        // Delete button
+        holder.deleteButton.setOnClickListener(view -> {
+            // Delete item from Firestore
+            deleteItem(position);
+        });
+    }
+
+    @Override
+    public int getItemCount() {
+        return shoppingItemList.size();
+    }
+
+    public class ShoppingItemViewHolder extends RecyclerView.ViewHolder {
         TextView itemName, quantity, price;
         Button deleteButton;
 
@@ -55,5 +63,40 @@ public class ShoppingListAdapter extends FirestoreRecyclerAdapter<ShoppingItem, 
             deleteButton = itemView.findViewById(R.id.deleteButton);
         }
     }
+
+    private void fetchItemsFromFirestore() {
+        firestore.collection("ShoppingItems")
+                .orderBy("itemName")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots != null) {
+                        shoppingItemList.clear();
+                        for (DocumentSnapshot snapshot : queryDocumentSnapshots.getDocuments()) {
+                            ShoppingItem item = snapshot.toObject(ShoppingItem.class);
+                            shoppingItemList.add(item);
+                        }
+                        notifyDataSetChanged();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Handle errors here
+                });
+    }
+
+    private void deleteItem(int position) {
+        ShoppingItem itemToDelete = shoppingItemList.get(position);
+        firestore.collection("ShoppingItems")
+                .document(itemToDelete.getItemName())  // Assuming itemName is unique
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    shoppingItemList.remove(position);
+                    notifyItemRemoved(position);
+                    notifyItemRangeChanged(position, shoppingItemList.size());
+                })
+                .addOnFailureListener(e -> {
+                    // Handle errors here
+                });
+    }
 }
+
 
