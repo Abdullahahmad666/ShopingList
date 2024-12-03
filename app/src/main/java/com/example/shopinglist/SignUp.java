@@ -10,16 +10,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,95 +23,75 @@ import java.util.HashMap;
 
 public class SignUp extends AppCompatActivity {
 
-    EditText email,etpassword;
+    EditText email, etpassword;
     Button btnSignup;
     TextView tvLogin;
     FirebaseAuth auth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_sign_up);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         init();
-        tvLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i =new Intent(SignUp.this, Login.class);
-                startActivity(i);
-                finish();
-            }
+
+        // Handle login redirection
+        tvLogin.setOnClickListener(v -> {
+            Intent i = new Intent(SignUp.this, Login.class);
+            startActivity(i);
+            finish();
         });
 
-        btnSignup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String username = email.getText().toString().trim();
-                String password = etpassword.getText().toString();
-                if(TextUtils.isEmpty(username) || TextUtils.isEmpty(password))
-                {
-                    Toast.makeText(SignUp.this, "Email or password is empty", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                ProgressDialog progressDialog = new ProgressDialog(SignUp.this);
-                progressDialog.show();
-                auth.createUserWithEmailAndPassword(username, password)
-                        .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-                            @Override
-                            public void onSuccess(AuthResult authResult) {
+        // Handle sign-up logic
+        btnSignup.setOnClickListener(view -> {
+            String username = email.getText().toString().trim();
+            String password = etpassword.getText().toString();
 
-                                String userID = auth.getCurrentUser().getUid();
-                                // store rest of the data into firestore
-                                HashMap<String, Object> data = new HashMap<>();
-                                data.put("email",username);
-                                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                                db.collection("users")
-                                        .document(userID)
-                                        .set(data)
-                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<Void> task) {
-                                                if(task.isSuccessful())
-                                                {
-                                                    Toast.makeText(SignUp.this, "User Created", Toast.LENGTH_SHORT).show();
-                                                    progressDialog.dismiss();
-                                                }
-                                                else
-                                                {
-                                                    Toast.makeText(SignUp.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                                    progressDialog.dismiss();
-                                                }
-                                            }
-                                        });
-
-                                startActivity(new Intent(SignUp.this, MainActivity.class));
-                                finish();
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(SignUp.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                            }
-                        });
+            if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
+                Toast.makeText(SignUp.this, "Email or password is empty", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            ProgressDialog progressDialog = new ProgressDialog(SignUp.this);
+            progressDialog.setMessage("Creating Account...");
+            progressDialog.show();
+
+            // Sign up with Firebase Auth
+            auth.createUserWithEmailAndPassword(username, password)
+                    .addOnCompleteListener(task -> {
+                        progressDialog.dismiss();
+                        if (task.isSuccessful()) {
+                            String userID = auth.getCurrentUser().getUid();
+
+                            // Store user data in Firestore
+                            HashMap<String, Object> data = new HashMap<>();
+                            data.put("email", username);
+
+                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                            db.collection("users")
+                                    .document(userID)
+                                    .set(data)
+                                    .addOnCompleteListener(storeTask -> {
+                                        if (storeTask.isSuccessful()) {
+                                            Toast.makeText(SignUp.this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(SignUp.this, MainActivity.class));
+                                            finish();
+                                        } else {
+                                            Toast.makeText(SignUp.this, "Firestore error: " + storeTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        } else {
+                            Toast.makeText(SignUp.this, "Sign-up failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
         });
-
-
     }
-    public void init()
-    {
+
+    private void init() {
         email = findViewById(R.id.email);
         etpassword = findViewById(R.id.password);
         btnSignup = findViewById(R.id.btnSignUp);
         tvLogin = findViewById(R.id.backToLogin);
         auth = FirebaseAuth.getInstance();
-
     }
-
 }

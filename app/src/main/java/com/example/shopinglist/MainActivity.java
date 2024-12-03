@@ -2,11 +2,10 @@ package com.example.shopinglist;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,45 +16,60 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView shoppingListRecyclerView;
     private ShoppingListAdapter adapter;
-    FloatingActionButton fabadd;
-    Button btnlogout;
+    private FloatingActionButton fabAdd;
+    private Button btnLogout;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        shoppingListRecyclerView = findViewById(R.id.recyclerView);
-        fabadd = findViewById(R.id.fabAddItem);
-        btnlogout = findViewById(R.id.btnLogout);
-        fabadd.setOnClickListener(v -> {
-            Intent i = new Intent(MainActivity.this, AddNewl.class);
-            startActivity(i);
-            finish();
-        });
-        btnlogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            // Redirect to Login Activity after logout
-            Intent intent = new Intent(MainActivity.this, Login.class);
+        initViews();
+
+        // Check if the user is authenticated
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            redirectToLogin();
+        }
+
+        // Handle adding a new item
+        fabAdd.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AddNewl.class);
             startActivity(intent);
-            finish();
         });
 
+        // Handle logout
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            redirectToLogin();
+        });
 
+        // Set up RecyclerView
         shoppingListRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        // Initialize Adapter
         adapter = new ShoppingListAdapter();
         shoppingListRecyclerView.setAdapter(adapter);
 
-        // Fetch data when activity starts
+        // Fetch data from the database
         adapter.fetchItemsFromRealtimeDatabase();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Fetch data again when the activity resumes to ensure updated data
-        adapter.fetchItemsFromRealtimeDatabase();
+        // Refresh data when returning to this activity
+        if (adapter != null) {
+            adapter.fetchItemsFromRealtimeDatabase();
+        }
+    }
+
+    private void initViews() {
+        shoppingListRecyclerView = findViewById(R.id.recyclerView);
+        fabAdd = findViewById(R.id.fabAddItem);
+        btnLogout = findViewById(R.id.btnLogout);
+    }
+
+    private void redirectToLogin() {
+        Intent intent = new Intent(MainActivity.this, Login.class);
+        startActivity(intent);
+        finish();
     }
 }
